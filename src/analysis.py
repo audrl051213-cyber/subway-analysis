@@ -28,10 +28,33 @@ df["수송일자"] = pd.to_datetime(df["수송일자"])
 line1_boarding = df[(df["호선"] == "1호선") & (df["승하차구분"] == "승차")].copy()
 
 line1_boarding["요일번호"] = line1_boarding["수송일자"].dt.day_of_week
-line1_weekday = line1_boarding[line1_boarding["요일번호"] < 5]
-line1_weekend = line1_boarding[line1_boarding["요일번호"] >= 5]
-print("1호선 평일 기록:", line1_weekday.shape)
-print("1호선 주말 기록:", line1_weekend.shape)
+line1_weekday = line1_boarding[line1_boarding["요일번호"] < 5].copy()
+line1_weekend = line1_boarding[line1_boarding["요일번호"] >= 5].copy()
+# print("1호선 평일 기록:", line1_weekday.shape)
+# print("1호선 주말 기록:", line1_weekend.shape)
+
+line1_weekday_total = line1_weekday.loc[:, "06시이전":"24시이후"].sum(axis=1)
+line1_weekday["총승차인원"] = line1_weekday_total
+# print(line1_weekday["총승차인원"].head())
+weekday_daily_avg = line1_weekday["총승차인원"].sum()/261
+
+line1_weekend_total = line1_weekend.loc[:, "06시이전":"24시이후"].sum(axis=1)
+line1_weekend["총승차인원"] = line1_weekend_total
+weekend_daily_avg = line1_weekend_total.sum()/104
+
+difference_pct = (weekday_daily_avg - weekend_daily_avg)/weekend_daily_avg*100
+# print(round(difference_pct, 2))
+# print("평일 하루 평균:", weekday_daily_avg)
+# print("주말 하루 평균:", weekend_daily_avg)
+
+station_weekday_total = line1_weekday.groupby("역명")["총승차인원"].sum()
+# print(station_weekday_total)
+
+print(station_weekday_total.sort_values(ascending=False).head(3))
+
+
+
+
 
 time_columns = ['06시이전', '06-07시간대',
        '07-08시간대', '08-09시간대', '09-10시간대', '10-11시간대', '11-12시간대', '12-13시간대',
