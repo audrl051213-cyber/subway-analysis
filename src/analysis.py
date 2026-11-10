@@ -50,10 +50,33 @@ difference_pct = (weekday_daily_avg - weekend_daily_avg)/weekend_daily_avg*100
 station_weekday_total = line1_weekday.groupby("역명")["총승차인원"].sum()
 # print(station_weekday_total)
 
-print(station_weekday_total.sort_values(ascending=False).head(3))
+# print(station_weekday_total.sort_values(ascending=False).head(3))
+
+weekday_by_time = line1_weekday.loc[:, "06시이전":"24시이후"].sum(axis=0)
+weekday_count = line1_weekday["수송일자"].nunique()
+weekday_avg_by_time = weekday_by_time/weekday_count
+
+weekend_by_time = line1_weekend.loc[:, "06시이전":"24시이후"].sum(axis=0)
+weekend_count = line1_weekend["수송일자"].nunique()
+weekend_avg_by_time = weekend_by_time/weekend_count
 
 
 
+plt.figure(figsize=(16,6))
+plt.plot(weekday_avg_by_time.index, weekday_avg_by_time.values, label = "평일")
+plt.title("2025년 1호선 평일,주말 시간대별 평균 승차 인원")
+plt.xticks(rotation = 45)
+plt.plot(weekend_avg_by_time.index, weekend_avg_by_time.values, label = "주말")
+plt.legend()
+plt.xlabel("시간대")
+plt.ylabel("하루 평균 승차 인원 (명)")
+plt.show()
+
+difference_by_time = (weekday_avg_by_time - weekend_avg_by_time)/weekend_avg_by_time*100
+# print(difference_by_time.idxmax(), difference_by_time.max())
+
+difference_people = weekday_avg_by_time - weekend_avg_by_time
+print(difference_people.idxmax(), difference_people.max())
 
 
 time_columns = ['06시이전', '06-07시간대',
