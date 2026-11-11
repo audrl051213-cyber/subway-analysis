@@ -1,6 +1,16 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = "Malgun Gothic"
+plt.rcParams["axes.unicode_minus"] = False
+
+def calculate_avg(station_data):
+    time_total = station_data.loc[:, "06시이전":"24시이후"].sum(axis=0)
+    day_count = station_data["수송일자"].nunique()
+
+    avg = time_total / day_count
+
+    return avg
+
 
 df = pd.read_csv("data/서울교통공사_역별 일별 시간대별 승하차인원_20251231.csv", encoding="cp949")
 
@@ -62,22 +72,82 @@ weekend_avg_by_time = weekend_by_time/weekend_count
 
 
 
-plt.figure(figsize=(16,6))
-plt.plot(weekday_avg_by_time.index, weekday_avg_by_time.values, label = "평일")
-plt.title("2025년 1호선 평일,주말 시간대별 평균 승차 인원")
-plt.xticks(rotation = 45)
-plt.plot(weekend_avg_by_time.index, weekend_avg_by_time.values, label = "주말")
-plt.legend()
-plt.xlabel("시간대")
-plt.ylabel("하루 평균 승차 인원 (명)")
-plt.show()
+# plt.figure(figsize=(16,6))
+# plt.plot(weekday_avg_by_time.index, weekday_avg_by_time.values, label = "평일")
+# plt.title("2025년 1호선 평일,주말 시간대별 평균 승차 인원")
+# plt.xticks(rotation = 45)
+# plt.plot(weekend_avg_by_time.index, weekend_avg_by_time.values, label = "주말")
+# plt.legend()
+# plt.xlabel("시간대")
+# plt.ylabel("하루 평균 승차 인원 (명)")
+# plt.show()
 
 difference_by_time = (weekday_avg_by_time - weekend_avg_by_time)/weekend_avg_by_time*100
 # print(difference_by_time.idxmax(), difference_by_time.max())
 
 difference_people = weekday_avg_by_time - weekend_avg_by_time
-print(difference_people.idxmax(), difference_people.max())
+# print(difference_people.idxmax(), difference_people.max())
 
+# print(weekday_avg_by_time.loc["24시이후"])
+# print(weekend_avg_by_time.loc["24시이후"])
+
+seoul_weekday = line1_weekday[line1_weekday["역명"] == "서울역"]
+seoul_weekday_time = seoul_weekday.loc[:, "06시이전" : "24시이후"].sum(axis=0)
+seoul_weekday_count = seoul_weekday["수송일자"].nunique()
+seoul_weekday_avg = seoul_weekday_time/seoul_weekday_count
+
+# print(seoul_weekday_avg.idxmax(), seoul_weekday_avg.max())
+
+jonggak_weekday = line1_weekday[line1_weekday["역명"] == "종각"]
+jonggak_weekday_time = jonggak_weekday.loc[:, "06시이전" : "24시이후"].sum(axis=0)
+jonggak_weekday_count = jonggak_weekday["수송일자"].nunique()
+jonggak_weekday_avg = jonggak_weekday_time/jonggak_weekday_count
+
+# print(jonggak_weekday_avg.idxmax(), jonggak_weekday_avg.max())
+
+# plt.figure(figsize=(16,6))
+# plt.plot(seoul_weekday_avg.index, seoul_weekday_avg.values, label = "서울역")
+# plt.plot(jonggak_weekday_avg.index, jonggak_weekday_avg.values, label = "종각역")
+# plt.legend()
+# plt.xticks(rotation = 45)
+# plt.xlabel("시간대")
+# plt.ylabel("평균 승차 인원")
+# plt.title("서울역과 종각역 평일 시간대별 평균 승차 인원")
+# plt.show()
+
+jonggak_alighting = df[(df["승하차구분"] == "하차") & (df["호선"] == "1호선") & (df["역명"] == "종각")]
+jonggak_alighting_weekday = jonggak_alighting[jonggak_alighting["수송일자"].dt.day_of_week < 5]
+jonggak_alighting_weekday_time = jonggak_alighting_weekday.loc[:, "06시이전" : "24시이후"].sum(axis = 0)
+jonggak_alighting_weekday_count = jonggak_alighting_weekday["수송일자"].nunique()
+jonggak_alighting_avg = jonggak_alighting_weekday_time/jonggak_alighting_weekday_count
+
+# plt.figure(figsize=(16,6))
+# plt.plot(jonggak_alighting_avg.index, jonggak_alighting_avg.values, label = "종각역 하차")
+# plt.plot(jonggak_weekday_avg.index, jonggak_weekday_avg.values, label = "종각역 승차")
+# plt.legend()
+# plt.xticks(rotation = 45)
+# plt.xlabel("시간대")
+# plt.ylabel("평균 인원")
+# plt.title("종각역 평일 시간대별 평균 승하차 인원")
+# plt.show()
+
+jonggak_net_flow = jonggak_alighting_avg - jonggak_weekday_avg
+print(jonggak_net_flow.idxmax(), jonggak_net_flow.max())
+print(jonggak_net_flow.idxmin(), jonggak_net_flow.min())
+
+
+# colors = ["blue" if x > 0 else "red" for x in jonggak_net_flow]
+# plt.bar(jonggak_net_flow.index, jonggak_net_flow.values, color = colors)
+# plt.xlabel("시간대")
+# plt.ylabel("순유입 인원")
+# plt.title("종각역 평일 시간대별 순유입 인원")
+# plt.xticks(rotation = 45)
+# plt.show()
+
+seoul_weekday_avg = calculate_avg(seoul_weekday)
+jonggak_weekday_avg = calculate_avg(jonggak_weekday)
+
+print(seoul_weekday_avg, jonggak_weekday_avg)
 
 time_columns = ['06시이전', '06-07시간대',
        '07-08시간대', '08-09시간대', '09-10시간대', '10-11시간대', '11-12시간대', '12-13시간대',
