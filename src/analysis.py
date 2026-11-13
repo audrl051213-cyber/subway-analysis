@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = "Malgun Gothic"
 plt.rcParams["axes.unicode_minus"] = False
+df = pd.read_csv("data/서울교통공사_역별 일별 시간대별 승하차인원_20251231.csv", encoding="cp949")
+df["수송일자"] = pd.to_datetime(df["수송일자"])
 
 def calculate_avg(station_data):
     time_total = station_data.loc[:, "06시이전":"24시이후"].sum(axis=0)
@@ -11,16 +13,31 @@ def calculate_avg(station_data):
 
     return avg
 
+def calculate_station_avg(station_name, boarding_type, line_name):
+    station_data = df[
+        (df["호선"] == line_name) &
+        (df["역명"] == station_name) &
+        (df["승하차구분"] == boarding_type) &
+        (df["수송일자"].dt.day_of_week < 5)
+    ]
 
-df = pd.read_csv("data/서울교통공사_역별 일별 시간대별 승하차인원_20251231.csv", encoding="cp949")
+    if station_data.empty:
+        print("해당 조건의 데이터가 없습니다.")
+        return None
+
+    return calculate_avg(station_data)
+
+result1 = calculate_station_avg("종각", "하차", "1호선")
+result2 = calculate_station_avg("강남", "승차", "1호선")
+
+print("정상 데이터:", result1.idxmax())
+print("없는 데이터:", result2)
 
 # df = df.dropna(how="all")
 # print(df.shape)
 
 # total = df.duplicated(subset=["수송일자", "호선", "역번호", "승하차구분"]).sum()
 # print(total)
-
-df["수송일자"] = pd.to_datetime(df["수송일자"])
 
 # print(df["수송일자"].dtype)
 # print(df["수송일자"].head())
@@ -132,8 +149,8 @@ jonggak_alighting_avg = jonggak_alighting_weekday_time/jonggak_alighting_weekday
 # plt.show()
 
 jonggak_net_flow = jonggak_alighting_avg - jonggak_weekday_avg
-print(jonggak_net_flow.idxmax(), jonggak_net_flow.max())
-print(jonggak_net_flow.idxmin(), jonggak_net_flow.min())
+# print(jonggak_net_flow.idxmax(), jonggak_net_flow.max())
+# print(jonggak_net_flow.idxmin(), jonggak_net_flow.min())
 
 
 # colors = ["blue" if x > 0 else "red" for x in jonggak_net_flow]
@@ -147,7 +164,7 @@ print(jonggak_net_flow.idxmin(), jonggak_net_flow.min())
 seoul_weekday_avg = calculate_avg(seoul_weekday)
 jonggak_weekday_avg = calculate_avg(jonggak_weekday)
 
-print(seoul_weekday_avg, jonggak_weekday_avg)
+# print(seoul_weekday_avg, jonggak_weekday_avg)
 
 time_columns = ['06시이전', '06-07시간대',
        '07-08시간대', '08-09시간대', '09-10시간대', '10-11시간대', '11-12시간대', '12-13시간대',
